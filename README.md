@@ -5,7 +5,7 @@ An AI-powered educational platform designed to help students learn mathematics m
 ## 🚀 Features
 
 - 📊 AI-Based Quiz Evaluation
-- 📚 Mathematics Content for Classes 6 to 10
+- 📚 Mathematics Content for Classes 9 to 12
 - 🧠 Chapter-Wise MCQs with Auto-Scoring
 - 👨‍🏫 Teacher and Admin Panel
 - 📈 Student Progress Tracking
