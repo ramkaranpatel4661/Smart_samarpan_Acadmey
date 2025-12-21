@@ -1,4 +1,4 @@
-# Smart Samarpan Academy 🎓
+# EduSphere – AI-Powered E-Learning Platform 🎓
 
 An AI-powered educational platform designed to help students learn mathematics more effectively through interactive content, performance tracking, and intelligent recommendations.
 
