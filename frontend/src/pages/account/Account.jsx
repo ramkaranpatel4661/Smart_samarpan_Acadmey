@@ -7,7 +7,7 @@ import {
 import { UserData } from '../../context/UserContext';
 import profileImage from '../../assets/user_logo.jpg';
 import toast from 'react-hot-toast';
-import './Account.css';
+import './account.css';
 
 const Account = ({ user }) => {
   const navigate = useNavigate();

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import "./About.css";
+import "./about.css";
 import { Link } from "react-router-dom";
 import profileImage from "../../assets/img.jpg";
 import {
