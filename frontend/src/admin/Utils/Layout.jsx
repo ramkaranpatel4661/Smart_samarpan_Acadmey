@@ -1,12 +1,19 @@
 import React from "react";
 import Sidebar from "./Sidebar";
-// import "./common.css"; // REMOVE THIS LINE
+import "./Admin.css";
 
 const Layout = ({ children }) => {
   return (
-    <div className="flex bg-gray-100 min-h-screen">
+    <div className="adm-layout">
+      {/* Background decorations for the entire admin area */}
+      <div className="adm-bg-glow" />
+      <div className="adm-bg-grid" />
+
+      {/* Glassmorphism Sidebar */}
       <Sidebar />
-      <div className="flex-1 p-4 lg:p-8">
+
+      {/* Main Content Area */}
+      <div className="adm-content">
         {children}
       </div>
     </div>

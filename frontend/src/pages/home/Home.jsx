@@ -1,172 +1,465 @@
-import React, { useState, useEffect } from "react"; // Added useEffect
-import { useNavigate, Link, useLocation } from "react-router-dom"; // Added useLocation
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import "./Home.css";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import Testimonials from "../../components/testimonials/Testimonials";
-import { FaGraduationCap, FaRobot, FaLaptopCode, FaEye, FaLightbulb, FaCrosshairs, FaChartLine, FaBookOpen, FaRocket, FaStar, FaInfoCircle, FaArrowLeft, FaArrowRight } from 'react-icons/fa'; // Added FaArrowLeft, FaArrowRight
+import {
+  FaGraduationCap, FaRobot, FaLaptopCode, FaEye,
+  FaLightbulb, FaCrosshairs, FaChartLine, FaBookOpen,
+  FaRocket, FaStar, FaArrowRight, FaPlay,
+  FaUsers, FaAward, FaBrain, FaInfinity,
+  FaCheckCircle, FaShieldAlt, FaClock,
+} from "react-icons/fa";
 
-// Receive isAuth AND user as props
-const Home = ({ isAuth, user }) => { // Added user prop
+/* ─────────────────────────────────────────────────────────────
+   useScrollReveal — adds .sma-revealed when element enters viewport
+───────────────────────────────────────────────────────────── */
+function useScrollReveal(options = {}) {
+  useEffect(() => {
+    const targets = document.querySelectorAll(".sma-reveal");
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("sma-revealed");
+          observer.unobserve(entry.target); // fire once
+        }
+      });
+    }, { threshold: 0.12, ...options });
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Animated Counter Hook
+───────────────────────────────────────────────────────────── */
+function useCountUp(target, duration = 2200, start = false) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!start) return;
+    let startTime = null;
+    const step = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [target, duration, start]);
+  return count;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Typing Headline Hook
+───────────────────────────────────────────────────────────── */
+function useTypewriter(words, speed = 90, pause = 1800) {
+  const [display, setDisplay] = useState("");
+  const [wordIdx, setWordIdx] = useState(0);
+  const [charIdx, setCharIdx] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const current = words[wordIdx];
+    let timeout;
+    if (!deleting && charIdx <= current.length) {
+      timeout = setTimeout(() => {
+        setDisplay(current.slice(0, charIdx));
+        setCharIdx((c) => c + 1);
+      }, speed);
+    } else if (!deleting && charIdx > current.length) {
+      timeout = setTimeout(() => setDeleting(true), pause);
+    } else if (deleting && charIdx >= 0) {
+      timeout = setTimeout(() => {
+        setDisplay(current.slice(0, charIdx));
+        setCharIdx((c) => c - 1);
+      }, speed / 2);
+    } else {
+      setDeleting(false);
+      setWordIdx((w) => (w + 1) % words.length);
+    }
+    return () => clearTimeout(timeout);
+  }, [charIdx, deleting, wordIdx, words, speed, pause]);
+
+  return display;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Floating Particle
+───────────────────────────────────────────────────────────── */
+function Particle({ style }) {
+  return <div className="sma-particle" style={style} />;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Stats Counter Card
+───────────────────────────────────────────────────────────── */
+function StatCard({ icon: Icon, target, suffix, label, started, delay }) {
+  const count = useCountUp(target, 2200, started);
+  return (
+    <div className="sma-stat-card sma-reveal sma-reveal-up" style={{ transitionDelay: delay }}>
+      <div className="sma-stat-icon-wrap">
+        <Icon />
+      </div>
+      <div className="sma-stat-number">
+        {count.toLocaleString()}{suffix}
+      </div>
+      <div className="sma-stat-label">{label}</div>
+      <div className="sma-stat-shine" />
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Feature Card
+───────────────────────────────────────────────────────────── */
+function FeatureCard({ icon: Icon, title, description, accent, index, onClick, btnLabel }) {
+  return (
+    <div
+      className="sma-feature-card sma-reveal sma-reveal-up"
+      style={{ "--accent": accent, transitionDelay: `${index * 0.12}s` }}
+    >
+      {/* animated border top */}
+      <div className="sma-card-border-top" />
+      {/* bg glow on hover */}
+      <div className="sma-card-hover-glow" />
+
+      <div className="sma-feature-icon-wrap">
+        <Icon className="sma-feature-icon" />
+      </div>
+      <h3 className="sma-feature-title">{title}</h3>
+      <p className="sma-feature-desc">{description}</p>
+      {onClick && (
+        <button className="sma-feature-btn" onClick={onClick}>
+          {btnLabel} <FaArrowRight style={{ marginLeft: 6 }} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Pillar Card
+───────────────────────────────────────────────────────────── */
+function PillarCard({ icon: Icon, title, description, color, index }) {
+  return (
+    <div
+      className="sma-pillar-card sma-reveal sma-reveal-up"
+      style={{ transitionDelay: `${index * 0.13}s` }}
+    >
+      <div className="sma-pillar-icon-ring" style={{ background: color }}>
+        <Icon />
+      </div>
+      <h4 className="sma-pillar-title">{title}</h4>
+      <p className="sma-pillar-desc">{description}</p>
+      <div className="sma-pillar-check">
+        <FaCheckCircle style={{ color: "#a855f7" }} />
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Main Component
+───────────────────────────────────────────────────────────── */
+const Home = ({ isAuth, user }) => {
   const navigate = useNavigate();
-  const location = useLocation(); // Hook to get current location
+  const location = useLocation();
+  const statsRef = useRef(null);
+  const [statsVisible, setStatsVisible] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  // NEW: Scroll to top on component mount or path change
+  /* Typed words for hero */
+  const typedWord = useTypewriter(["Algebra", "Calculus", "Geometry", "Statistics", "Trigonometry"]);
+
+  /* Scroll reveal hook */
+  useScrollReveal();
+
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [location.pathname]); // Dependency on location.pathname ensures it runs on internal navigation to home
+  }, [location.pathname]);
+
+  /* Intersection Observer for stats counter */
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setStatsVisible(true); },
+      { threshold: 0.3 }
+    );
+    if (statsRef.current) observer.observe(statsRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  /* Mouse parallax on hero */
+  const handleMouseMove = useCallback((e) => {
+    const { innerWidth, innerHeight } = window;
+    setMousePos({
+      x: (e.clientX / innerWidth - 0.5) * 20,
+      y: (e.clientY / innerHeight - 0.5) * 20,
+    });
+  }, []);
+
+  /* Floating particles */
+  const particles = useRef(
+    Array.from({ length: 22 }, () => ({
+      width:  `${Math.random() * 12 + 3}px`,
+      height: `${Math.random() * 12 + 3}px`,
+      left:   `${Math.random() * 100}%`,
+      top:    `${Math.random() * 100}%`,
+      animationDuration: `${Math.random() * 10 + 7}s`,
+      animationDelay:    `${Math.random() * 6}s`,
+      opacity: Math.random() * 0.45 + 0.08,
+    }))
+  ).current;
 
   return (
-    <div className="bg-gray-100 min-h-screen">
-      {/* Hero Section */}
-      <div className="relative text-white py-24 md:py-32 overflow-hidden">
-        {/* Background Image with Overlay for a richer look */}
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1535131749006-b7f58f994e99?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80" 
-            alt="Math Learning Background" 
-            className="w-full h-full object-cover opacity-70"
-          />
-          <div className="absolute inset-0 bg-black opacity-40"></div>
+    <div className="sma-home">
+
+      {/* ══ HERO ══════════════════════════════════════════════ */}
+      <section className="sma-hero" onMouseMove={handleMouseMove}>
+        <div className="sma-hero-bg" />
+        <div className="sma-hero-grid" />
+
+        {/* Moving orbs follow mouse */}
+        <div
+          className="sma-hero-orb sma-orb-a"
+          style={{ transform: `translate(${mousePos.x * 1.2}px, ${mousePos.y * 1.2}px)` }}
+        />
+        <div
+          className="sma-hero-orb sma-orb-b"
+          style={{ transform: `translate(${-mousePos.x * 0.8}px, ${-mousePos.y * 0.8}px)` }}
+        />
+
+        {/* Particles */}
+        <div className="sma-particles-container">
+          {particles.map((p, i) => <Particle key={i} style={p} />)}
         </div>
 
-        {/* Hero background color */}
-        <div className="absolute inset-0" style={{backgroundColor: '#8B008B', opacity: 0.9}}></div>
+        {/* Content */}
+        <div className="sma-hero-content">
+          {/* Badge */}
+          <div className="sma-hero-badge sma-animate-badge">
+            <FaStar style={{ color: "#fbbf24", marginRight: 6 }} />
+            India's #1 AI-Powered Math Academy
+          </div>
 
-
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6 animate-fade-in-down">
-            Unlock Your Math Potential with Samarpan Academy
+          {/* Headline */}
+          <h1 className="sma-hero-heading sma-animate-heading">
+            Master{" "}
+            <span className="sma-typewriter-wrap">
+              <span className="sma-typewriter">{typedWord}</span>
+              <span className="sma-cursor">|</span>
+            </span>
+            <br />
+            <span className="sma-hero-gradient-text">with Samarpan Academy</span>
           </h1>
-          <p className="text-lg sm:text-xl md:text-2xl font-light max-w-3xl mx-auto mb-10 animate-fade-in-up">
-            Master complex concepts with expert-led courses, personalized learning paths, and cutting-edge AI tools for quizzes and formula generation.
+
+          {/* Subtext */}
+          <p className="sma-hero-subtext sma-animate-subtext">
+            Master complex concepts with expert-led courses, personalized
+            learning paths, and cutting-edge AI tools for quizzes &amp; formula
+            generation.
           </p>
-          {/* Button always shows "Explore Our Courses" and navigates to /courses */}
-          <button 
-            onClick={() => navigate("/courses")} 
-            className="inline-block bg-white text-purple-700 py-3 px-10 rounded-full font-bold shadow-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-110 animate-bounce-in"
-          >
-            Explore Our Courses
-          </button>
-        </div>
-      </div>
-      
-      {/* Why Choose Samarpan Math Academy? Section - Enhanced with Icons and Animations */}
-      <div className="bg-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-10 animate-fade-in">
-            Why Choose Samarpan Math Academy?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-6 rounded-xl shadow-md bg-purple-50 text-purple-800 transform transition-transform duration-300 hover:scale-105 animate-slide-in-left flex flex-col items-center">
-              <FaGraduationCap className="text-5xl mb-4 text-purple-600" />
-              <h3 className="text-xl font-bold mb-3">Expert-Led Courses</h3>
-              <p className="text-gray-700">Learn from experienced instructors who simplify complex math topics for clear understanding, ensuring a strong foundation.</p>
-            </div>
-            <div className="p-6 rounded-xl shadow-md bg-blue-50 text-blue-800 transform transition-transform duration-300 hover:scale-105 animate-fade-in-up-delay-1 flex flex-col items-center">
-              <FaRobot className="text-5xl mb-4 text-blue-600" />
-              <h3 className="text-xl font-bold mb-3">AI-Powered Learning</h3>
-              <p className="text-gray-700">Utilize our smart tools for instant quiz generation, comprehensive formula lookups, and personalized recommendations based on your progress.</p>
-              <button 
-                onClick={() => navigate("/ai-tools")} 
-                className="mt-4 bg-blue-600 text-white py-2 px-6 rounded-full font-semibold shadow-md hover:bg-blue-700 transition-colors duration-300 transform hover:scale-110"
-              >
-                Explore AI Tools
-              </button>
-            </div>
-            <div className="p-6 rounded-xl shadow-md bg-green-50 text-green-800 transform transition-transform duration-300 hover:scale-105 animate-slide-in-right flex flex-col items-center">
-              <FaLaptopCode className="text-5xl mb-4 text-green-600" />
-              <h3 className="text-xl font-bold mb-3">Flexible & Accessible</h3>
-              <p className="text-gray-700">Study at your own pace, anytime, anywhere. Our platform is designed for your convenience, fitting into your busy schedule.</p>
-            </div>
+
+          {/* Action Buttons */}
+          <div className="sma-hero-actions sma-animate-actions">
+            <button className="sma-btn-primary" onClick={() => navigate("/courses")}>
+              <FaRocket style={{ marginRight: 8 }} />
+              Explore Courses
+            </button>
+            <button className="sma-btn-ghost" onClick={() => navigate("/ai-tools")}>
+              <span className="sma-play-ring">
+                <FaPlay style={{ fontSize: 11 }} />
+              </span>
+              Try AI Tools
+            </button>
+          </div>
+
+          {/* Trust chips */}
+          <div className="sma-hero-trust sma-animate-trust">
+            {["Expert Instructors", "AI-Powered", "24/7 Access"].map((t, i) => (
+              <span key={t} className="sma-trust-chip" style={{ animationDelay: `${0.9 + i * 0.15}s` }}>
+                <FaCheckCircle style={{ color: "#a855f7", marginRight: 5 }} />
+                {t}
+              </span>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* Our Vision Section - Enhanced with Icon */}
-      <div className="bg-gray-100 py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-10 animate-fade-in flex items-center justify-center">
-            <FaEye className="text-purple-600 mr-4" /> Our Vision
+        {/* Floating glass cards */}
+        <div className="sma-hero-float-card sma-float-card-1 sma-animate-float-card-l">
+          <FaBrain style={{ color: "#a855f7", fontSize: 22 }} />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>AI Quiz Ready</div>
+            <div style={{ fontSize: 11, opacity: 0.7 }}>Personalized for you</div>
+          </div>
+          <div className="sma-float-card-dot" />
+        </div>
+        <div className="sma-hero-float-card sma-float-card-2 sma-animate-float-card-r">
+          <FaAward style={{ color: "#fbbf24", fontSize: 22 }} />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>Top Rated</div>
+            <div style={{ fontSize: 11, opacity: 0.7 }}>★★★★★ 4.9/5</div>
+          </div>
+        </div>
+
+
+      </section>
+
+      {/* ══ STATS ════════════════════════════════════════════ */}
+      <section className="sma-stats-section" ref={statsRef}>
+        <div className="sma-section-inner">
+          <div className="sma-stats-grid">
+            <StatCard icon={FaUsers}    target={12000} suffix="+" label="Students Enrolled"    started={statsVisible} delay="0s" />
+            <StatCard icon={FaBookOpen} target={80}    suffix="+" label="Courses Available"    started={statsVisible} delay="0.1s" />
+            <StatCard icon={FaAward}    target={98}    suffix="%" label="Satisfaction Rate"    started={statsVisible} delay="0.2s" />
+            <StatCard icon={FaInfinity} target={500}   suffix="+" label="AI Quizzes Generated" started={statsVisible} delay="0.3s" />
+          </div>
+        </div>
+      </section>
+
+      {/* ══ WHY SAMARPAN ═════════════════════════════════════ */}
+      <section className="sma-section sma-section-dark">
+        <div className="sma-section-inner">
+          <div className="sma-section-header sma-reveal sma-reveal-up">
+            <span className="sma-section-pill">Why Us</span>
+            <h2 className="sma-section-title">
+              Why Choose <span className="sma-purple">Samarpan</span> Math Academy?
+            </h2>
+            <p className="sma-section-subtitle">
+              Everything you need to master mathematics — in one intelligent platform.
+            </p>
+          </div>
+          <div className="sma-features-grid">
+            <FeatureCard index={0} icon={FaGraduationCap} title="Expert-Led Courses"
+              description="Learn from experienced instructors who simplify complex math topics for deep understanding and strong foundations."
+              accent="#a855f7" />
+            <FeatureCard index={1} icon={FaRobot} title="AI-Powered Learning"
+              description="Instant quiz generation, comprehensive formula lookups, and personalized recommendations — all powered by AI."
+              accent="#3b82f6" onClick={() => navigate("/ai-tools")} btnLabel="Try AI Tools" />
+            <FeatureCard index={2} icon={FaLaptopCode} title="Flexible & Accessible"
+              description="Study at your own pace, anytime, anywhere. Our platform is designed for your convenience and busy schedule."
+              accent="#10b981" />
+            <FeatureCard index={3} icon={FaShieldAlt} title="Trusted & Secure"
+              description="Your data, progress, and learning journey are protected with enterprise-grade security and privacy standards."
+              accent="#f59e0b" />
+          </div>
+        </div>
+      </section>
+
+      {/* ══ VISION ═══════════════════════════════════════════ */}
+      <section className="sma-vision-section">
+        <div className="sma-vision-bg-orb sma-orb-1" />
+        <div className="sma-vision-bg-orb sma-orb-2" />
+        {/* Rotating ring decoration */}
+        <div className="sma-vision-ring" />
+        <div className="sma-section-inner sma-vision-inner">
+          <div className="sma-vision-icon-wrap sma-reveal sma-reveal-zoom">
+            <FaEye />
+          </div>
+          <span className="sma-section-pill sma-reveal sma-reveal-up" style={{ transitionDelay: "0.1s" }}>Our Vision</span>
+          <h2 className="sma-section-title sma-reveal sma-reveal-up" style={{ marginTop: 12, transitionDelay: "0.2s" }}>
+            Redefining Math Education
           </h2>
-          <p className="text-lg md:text-xl text-gray-700 max-w-4xl mx-auto animate-fade-in-up-delay-2">
-            At Samarpan Math Academy, we envision a world where every student can conquer their fear of mathematics and unlock their full potential. We are committed to providing high-quality, accessible, and innovative learning experiences that foster deep understanding and a lifelong love for numbers.
+          <p className="sma-vision-text sma-reveal sma-reveal-up" style={{ transitionDelay: "0.3s" }}>
+            At Samarpan Math Academy, we envision a world where every student
+            can conquer their fear of mathematics and unlock their full
+            potential. We are committed to providing high-quality, accessible,
+            and innovative learning experiences that foster deep understanding
+            and a lifelong love for numbers.
           </p>
-          <Link 
-            to="/about" 
-            className="inline-block mt-8 bg-purple-600 text-white py-2 px-6 rounded-full font-semibold shadow-md hover:bg-purple-700 transition-colors duration-300 transform hover:scale-110 animate-bounce-in"
+          <div className="sma-vision-perks sma-reveal sma-reveal-up" style={{ transitionDelay: "0.4s" }}>
+            {[
+              { icon: FaClock,     label: "Learn at Your Pace" },
+              { icon: FaBrain,     label: "Adaptive Curriculum" },
+              { icon: FaChartLine, label: "Progress Analytics" },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="sma-vision-perk">
+                <Icon className="sma-perk-icon" />
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+          <Link
+            to="/about"
+            className="sma-btn-primary sma-reveal sma-reveal-up"
+            style={{ textDecoration: "none", display: "inline-flex", marginTop: 28, transitionDelay: "0.5s" }}
           >
-            Learn More About Us
+            Learn More About Us <FaArrowRight style={{ marginLeft: 8 }} />
           </Link>
         </div>
-      </div>
+      </section>
 
-      {/* Testimonials Section (Moved and Enhanced with Slider) */}
-      <div className="bg-gray-50 py-16">
-        <div className="container mx-auto px-4">
-          {/* REMOVED DUPLICATE HEADING */}
-          {/* <h2 className="text-3xl md:text-4xl font-extrabold text-center text-gray-800 mb-10 animate-fade-in">
-            Hear from Our Students
-          </h2> */}
+      {/* ══ TESTIMONIALS ═════════════════════════════════════ */}
+      <section className="sma-section sma-section-dark">
+        <div className="sma-section-inner">
+          <div className="sma-section-header sma-reveal sma-reveal-up">
+            <span className="sma-section-pill">Student Stories</span>
+            <h2 className="sma-section-title">
+              Hear from Our <span className="sma-purple">Students</span>
+            </h2>
+          </div>
           <Testimonials />
         </div>
-      </div>
+      </section>
 
-      {/* Key Features/Benefits Section - Replaced Emojis with Icons */}
-      <div className="bg-white py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center text-gray-800 mb-10 animate-fade-in">
-            What Sets Us Apart
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="flex flex-col items-center p-6 rounded-xl shadow-md bg-yellow-50 text-yellow-800 animate-fade-in-up-delay-3 transform transition-transform duration-300 hover:scale-105">
-              <FaLightbulb className="text-4xl mb-3 text-yellow-600" />
-              <h3 className="text-xl font-bold mb-2">Conceptual Clarity</h3>
-              <p className="text-gray-700 text-center text-sm">Focus on building strong fundamentals through clear explanations.</p>
-            </div>
-            <div className="flex flex-col items-center p-6 rounded-xl shadow-md bg-red-50 text-red-800 animate-fade-in-up-delay-4 transform transition-transform duration-300 hover:scale-105">
-              <FaCrosshairs className="text-4xl mb-3 text-red-600" />
-              <h3 className="text-xl font-bold mb-2">Targeted Practice</h3>
-              <p className="text-gray-700 text-center text-sm">Practice with quizzes tailored to your specific needs and difficulty levels.</p>
-            </div>
-            <div className="flex flex-col items-center p-6 rounded-xl shadow-md bg-indigo-50 text-indigo-800 animate-fade-in-up-delay-5 transform transition-transform duration-300 hover:scale-105">
-              <FaChartLine className="text-4xl mb-3 text-indigo-600" />
-              <h3 className="text-xl font-bold mb-2">Performance Tracking</h3>
-              <p className="text-gray-700 text-center text-sm">Monitor your progress with detailed analytics and AI-driven insights.</p>
-            </div>
-            <div className="flex flex-col items-center p-6 rounded-xl shadow-md bg-teal-50 text-teal-800 animate-fade-in-up-delay-6 transform transition-transform duration-300 hover:scale-105">
-              <FaBookOpen className="text-4xl mb-3 text-teal-600" />
-              <h3 className="text-xl font-bold mb-2">Rich Content Library</h3>
-              <p className="text-gray-700 text-center text-sm">Access a vast collection of courses, lectures, and resources.</p>
-            </div>
+      {/* ══ WHAT SETS US APART ═══════════════════════════════ */}
+      <section className="sma-section" style={{ background: "#0f0c1a" }}>
+        <div className="sma-section-inner">
+          <div className="sma-section-header sma-reveal sma-reveal-up">
+            <span className="sma-section-pill">Our Edge</span>
+            <h2 className="sma-section-title">
+              What <span className="sma-purple">Sets Us Apart</span>
+            </h2>
+            <p className="sma-section-subtitle">
+              Every feature is built to accelerate your learning and results.
+            </p>
+          </div>
+          <div className="sma-pillars-grid">
+            <PillarCard index={0} icon={FaLightbulb}  color="rgba(251,191,36,0.15)"  title="Conceptual Clarity"   description="Build strong fundamentals through crystal-clear explanations and step-by-step walkthroughs." />
+            <PillarCard index={1} icon={FaCrosshairs} color="rgba(239,68,68,0.15)"   title="Targeted Practice"    description="AI-tailored quizzes match your exact level so every minute of practice counts." />
+            <PillarCard index={2} icon={FaChartLine}  color="rgba(99,102,241,0.15)"  title="Performance Tracking" description="Monitor your growth with detailed analytics and personalized AI-driven insights." />
+            <PillarCard index={3} icon={FaBookOpen}   color="rgba(16,185,129,0.15)"  title="Rich Content Library" description="Access a vast, ever-growing collection of courses, lectures, and practice resources." />
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Call to Action Section - Enhanced with Icon */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-700 py-20 text-white text-center">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-6 animate-fade-in flex items-center justify-center">
-            <FaRocket className="text-white mr-4" /> Ready to Transform Your Math Journey?
-          </h2>
-          <p className="text-lg md:text-xl font-light max-w-3xl mx-auto mb-10 animate-fade-in-up-delay-7">
-            Join thousands of students who are achieving their academic goals with Samarpan Math Academy.
-          </p>
-          {/* This button remains conditionally rendered based on isAuth */}
-          {!isAuth ? (
-            <button 
-              onClick={() => navigate("/register")} 
-              className="inline-block bg-white text-purple-700 py-3 px-10 rounded-full font-bold shadow-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-110 animate-bounce-in"
-            >
-              Sign Up Today!
-            </button>
-          ) : (
-            <button 
-              onClick={() => navigate(`/${user._id}/dashboard`)} /* Navigate to user's dashboard */
-              className="inline-block bg-white text-purple-700 py-3 px-10 rounded-full font-bold shadow-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-110 animate-bounce-in"
-            >
-              Go to Dashboard {/* Changed button text */}
-            </button>
-          )}
+      {/* ══ CTA ══════════════════════════════════════════════ */}
+      <section className="sma-cta-section">
+        <div className="sma-cta-glow" />
+        <div className="sma-cta-particles">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="sma-cta-sparkle" style={{ animationDelay: `${i * 0.4}s`, left: `${10 + i * 11}%` }} />
+          ))}
         </div>
-      </div>
+        <div className="sma-section-inner sma-cta-inner">
+          <div className="sma-cta-icon-ring sma-reveal sma-reveal-zoom">
+            <FaRocket />
+          </div>
+          <h2 className="sma-cta-title sma-reveal sma-reveal-up" style={{ transitionDelay: "0.15s" }}>
+            Ready to Transform Your
+            <span className="sma-hero-gradient-text"> Math Journey?</span>
+          </h2>
+          <p className="sma-cta-subtitle sma-reveal sma-reveal-up" style={{ transitionDelay: "0.25s" }}>
+            Join thousands of students achieving their academic goals with Samarpan Math Academy.
+          </p>
+          <div className="sma-reveal sma-reveal-up" style={{ transitionDelay: "0.35s" }}>
+            {!isAuth ? (
+              <button className="sma-btn-primary sma-cta-btn" onClick={() => navigate("/register")}>
+                Sign Up Today — It's Free!
+                <FaArrowRight style={{ marginLeft: 10 }} />
+              </button>
+            ) : (
+              <button className="sma-btn-primary sma-cta-btn" onClick={() => navigate(`/${user._id}/dashboard`)}>
+                Go to My Dashboard
+                <FaArrowRight style={{ marginLeft: 10 }} />
+              </button>
+            )}
+          </div>
+          <p className="sma-cta-note sma-reveal sma-reveal-up" style={{ transitionDelay: "0.45s" }}>
+            No credit card required &bull; Cancel anytime
+          </p>
+        </div>
+      </section>
+
     </div>
   );
 };

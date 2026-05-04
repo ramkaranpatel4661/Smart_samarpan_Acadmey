@@ -45,7 +45,7 @@ const App = () => {
             
             <Route
               path="/ai-tools"
-              element={isAuth ? <AITools /> : <Login />}
+              element={<AITools />}
             />
 
             <Route

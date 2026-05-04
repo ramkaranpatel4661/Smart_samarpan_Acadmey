@@ -1,19 +1,36 @@
 import React, { useEffect, useState } from "react";
-// import "./users.css"; // REMOVE THIS LINE
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { server } from "../../main";
 import Layout from "../Utils/Layout";
 import toast from "react-hot-toast";
 import Loading from "../../components/loading/Loading";
+import { FaTrash, FaUserEdit } from "react-icons/fa";
 
 const AdminUsers = ({ user }) => {
   const navigate = useNavigate();
 
-  if (user && user.mainrole !== "superadmin") return navigate("/");
+  useEffect(() => {
+    if (user && user.role !== "admin") {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  if (user && user.role !== "admin") {
+    return (
+      <Layout>
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <h2 className="adm-page-title">Access Denied</h2>
+          <p style={{ color: '#9b93b8' }}>You do not have admin privileges to manage users.</p>
+        </div>
+      </Layout>
+    );
+  }
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
 
   async function fetchUsers() {
     try {
@@ -35,7 +52,7 @@ const AdminUsers = ({ user }) => {
   }, []);
 
   const updateRole = async (id) => {
-    if (confirm("Are you sure you want to update this user role?")) {
+    if (confirm("Are you sure you want to update this user's role?")) {
       try {
         const { data } = await axios.put(
           `${server}/api/user/${id}`,
@@ -55,56 +72,96 @@ const AdminUsers = ({ user }) => {
     }
   };
 
+  const deleteUser = (id) => {
+    // Optional placeholder for future backend deletion logic
+    if (confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+      toast.error("User deletion API endpoint is not yet implemented.");
+    }
+  };
+
   if (loading) {
     return <Loading />;
   }
+
+  // Filter users based on search query and role filter
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          u.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === "all" || u.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
   
   return (
     <Layout>
-      <div className="bg-gray-100 min-h-screen py-16">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-extrabold text-center text-gray-800 mb-6">
-            All Users
-          </h1>
-          <div className="bg-white p-6 rounded-xl shadow-lg overflow-x-auto">
-            <table className="w-full text-left table-auto">
-              <thead className="bg-gray-200 text-gray-700 uppercase text-sm">
-                <tr>
-                  <th scope="col" className="px-6 py-3">#</th>
-                  <th scope="col" className="px-6 py-3">Name</th>
-                  <th scope="col" className="px-6 py-3">Email</th>
-                  <th scope="col" className="px-6 py-3">Role</th>
-                  <th scope="col" className="px-6 py-3">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users && users.length > 0 ? (
-                  users.map((e, i) => (
-                    <tr key={e._id} className="bg-white border-b hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{i + 1}</td>
-                      <td className="px-6 py-4">{e.name}</td>
-                      <td className="px-6 py-4">{e.email}</td>
-                      <td className="px-6 py-4">{e.role}</td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => updateRole(e._id)}
-                          className="bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold transition-colors duration-300 hover:bg-purple-700 text-sm"
-                        >
-                          Update Role
+      <h2 className="adm-page-title">Manage Users</h2>
+      
+      <div className="adm-table-wrap">
+        <div className="adm-table-top">
+          <input 
+            type="text" 
+            placeholder="Search by name or email..." 
+            className="adm-table-search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <div style={{display: 'flex', gap: '10px'}}>
+            <select 
+              className="adm-table-search" 
+              style={{width: 'auto'}}
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+            >
+              <option value="all">All Roles</option>
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table className="adm-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers && filteredUsers.length > 0 ? (
+                filteredUsers.map((e, i) => (
+                  <tr key={e._id}>
+                    <td>{i + 1}</td>
+                    <td>{e.name}</td>
+                    <td>{e.email}</td>
+                    <td>
+                      <span className={`adm-role-badge ${e.role === 'admin' ? 'admin' : 'user'}`}>
+                        {e.role}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="adm-table-actions">
+                        <button onClick={() => updateRole(e._id)} className="adm-btn-update" title="Toggle Role">
+                          <FaUserEdit />
                         </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="text-center py-4 text-gray-500">
-                      No users found.
+                        <button onClick={() => deleteUser(e._id)} className="adm-btn-delete" title="Delete User">
+                          <FaTrash />
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#9b93b8' }}>
+                    No users found matching your filters.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </Layout>

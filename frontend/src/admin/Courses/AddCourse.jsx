@@ -20,7 +20,21 @@ const categories = [
 const AddCourse = ({ user }) => {
   const navigate = useNavigate();
 
-  if (user && user.role !== "admin") return navigate("/");
+  React.useEffect(() => {
+    if (user && user.role !== "admin") {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  if (user && user.role !== "admin") {
+    return (
+      <Layout>
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <h2 className="text-2xl font-bold text-gray-800">Access Denied</h2>
+        </div>
+      </Layout>
+    );
+  }
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

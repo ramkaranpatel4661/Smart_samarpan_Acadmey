@@ -1,0 +1,103 @@
+/* ================================================================
+   Dashboard Page — Premium Dark Theme
+   ================================================================ */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+.dash-page {
+  font-family: "Inter", sans-serif;
+  background: #070516;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  padding: 60px 20px 100px;
+}
+
+/* Background effects */
+.dash-bg-glow {
+  position: absolute;
+  top: -150px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1000px;
+  height: 600px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dash-bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(168, 85, 247, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: dashGridDrift 30s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes dashGridDrift {
+  from { background-position: 0 0; }
+  to   { background-position: 50px 50px; }
+}
+
+.dash-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+.dash-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.dash-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+  background: linear-gradient(135deg, #fff 30%, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: acFadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.dash-subtitle {
+  font-size: 1.1rem;
+  color: #9b93b8;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+  animation: acFadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.dash-empty {
+  text-align: center;
+  padding: 60px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  margin-top: 40px;
+  animation: acFadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+.dash-empty-emoji {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.dash-empty-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 10px;
+}
+
+.dash-empty-hint {
+  color: #9b93b8;
+}
