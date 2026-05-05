@@ -1,21 +1,24 @@
-    import express from "express";
-    import dotenv from "dotenv";
-    import { connectDb } from "./database/db.js";
-    import Razorpay from "razorpay";
-    import cors from "cors";
-    import fetch from "node-fetch";
-    import mongoose from "mongoose";
-    import { QuizResult } from "./models/QuizResult.js";
-    import { User } from "./models/User.js";
+import express from "express";
+import dotenv from "dotenv";
+import { connectDb } from "./database/db.js";
+import Razorpay from "razorpay";
+import cors from "cors";
+import fetch from "node-fetch";
+import mongoose from "mongoose";
+import { QuizResult } from "./models/QuizResult.js";
+import { User } from "./models/User.js";
+import userRoutes from "./routes/user.js";
+import courseRoutes from "./routes/course.js";
+import adminRoutes from "./routes/admin.js";
 
-    dotenv.config();
+dotenv.config();
 
-    export const instance = new Razorpay({
-      key_id: process.env.Razorpay_Key,
-      key_secret: process.env.Razorpay_Secret,
-    });
+export const instance = new Razorpay({
+  key_id: process.env.Razorpay_Key,
+  key_secret: process.env.Razorpay_Secret,
+});
 
-    const app = express();
+const app = express();
 
     app.use(express.json());
 
@@ -46,9 +49,16 @@
 
     app.use("/uploads", express.static("uploads"));
 
-    import userRoutes from "./routes/user.js";
-    import courseRoutes from "./routes/course.js";
-    import adminRoutes from "./routes/admin.js";
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const fetchWithRetry = async (url, options, retries = 3, backoffMs = 2000) => {
+      const response = await fetch(url, options);
+      if (response.status === 429 && retries > 0) {
+        console.warn(`API Rate limit hit. Retrying in ${backoffMs}ms... (${retries} retries left)`);
+        await sleep(backoffMs);
+        return fetchWithRetry(url, options, retries - 1, backoffMs * 2);
+      }
+      return response;
+    };
 
     app.use("/api", userRoutes);
     app.use("/api", courseRoutes);
@@ -89,15 +99,27 @@
       chatHistory.push({ role: "user", parts: [{ text: prompt }] });
       const payload = { contents: chatHistory };
       const apiKey = process.env.GEMINI_API_KEY || "";
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+      if (!apiKey) {
+        return res.status(500).json({ success: false, message: "AI service not configured. Please set GEMINI_API_KEY on the server." });
+      }
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
       try {
-        const response = await fetch(apiUrl, {
+        const response = await fetchWithRetry(apiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+        if (response.status === 429) {
+          const errorData = await response.json().catch(() => null);
+          console.error("Gemini API Rate Limit Response:", errorData);
+          return res.status(429).json({
+            success: false,
+            message: "AI rate limit exceeded. Please wait a few minutes and try again.",
+            details: errorData,
+          });
+        }
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => null);
           console.error("Gemini API Error Response:", errorData);
           return res.status(response.status).json({
             success: false,
@@ -165,15 +187,27 @@
       chatHistory.push({ role: "user", parts: [{ text: prompt }] });
       const payload = { contents: chatHistory };
       const apiKey = process.env.GEMINI_API_KEY || "";
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+      if (!apiKey) {
+        return res.status(500).json({ success: false, message: "AI service not configured. Please set GEMINI_API_KEY on the server." });
+      }
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
       try {
-        const response = await fetch(apiUrl, {
+        const response = await fetchWithRetry(apiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+        if (response.status === 429) {
+          const errorData = await response.json().catch(() => null);
+          console.error("Gemini API Rate Limit Response for Formula Generation:", errorData);
+          return res.status(429).json({
+            success: false,
+            message: "AI rate limit exceeded. Please wait a few minutes and try again.",
+            details: errorData,
+          });
+        }
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => null);
           console.error("Gemini API Error Response for Formula Generation:", errorData);
           return res.status(response.status).json({
             success: false,

@@ -2,7 +2,27 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Toaster, toast } from 'react-hot-toast';
 import { FaSpinner, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { server } from '../../main';
 import './AITools.css'; // Import custom CSS file for specific overrides/enhancements
+import katex from 'katex';
+
+/* ── Inline Math renderer ──────────────────────────────────── */
+const InlineMath = ({ text }) => {
+  if (!text) return null;
+  const parts = text.split('$');
+  return (
+    <span>
+      {parts.map((part, index) => {
+        if (index % 2 === 0) return <span key={index}>{part}</span>;
+        try {
+          return <span key={index} dangerouslySetInnerHTML={{ __html: katex.renderToString(part, { throwOnError: false, displayMode: false }) }} />;
+        } catch (e) {
+          return <span key={index}>${part}$</span>;
+        }
+      })}
+    </span>
+  );
+};
 
 const QuizGenerator = () => {
   const [topic, setTopic] = useState('');
@@ -23,7 +43,7 @@ const QuizGenerator = () => {
     setShowResults(false);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/generate-quiz', {
+      const response = await axios.post(`${server}/api/generate-quiz`, {
         topic,
         difficulty,
         num_questions: 10,
@@ -70,7 +90,7 @@ const QuizGenerator = () => {
     const userId = "60c72b1f9b1e8b001c8e8e8e"; // Placeholder User ID - REPLACE WITH ACTUAL USER ID
 
     try {
-      const response = await axios.post('http://localhost:5000/api/submit-quiz-result', {
+      const response = await axios.post(`${server}/api/submit-quiz-result`, {
         userId, // Send user ID
         topic: quiz[0].topic || topic, // Use topic from quiz if available, else from state
         difficulty: quiz[0].difficulty || difficulty, // Use difficulty from quiz if available, else from state
@@ -165,7 +185,7 @@ const QuizGenerator = () => {
             <h3 className="text-2xl font-semibold text-gray-800 mb-4">Your Quiz:</h3>
             {quiz.map((q, qIndex) => (
               <div key={qIndex} className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50 question-card">
-                <p className="font-bold text-lg text-gray-900 mb-2">Q{qIndex + 1}: {q.question}</p>
+                <p className="font-bold text-lg text-gray-900 mb-2">Q{qIndex + 1}: <InlineMath text={q.question} /></p>
                 <div className="options-group">
                   {q.options.map((option, optIndex) => (
                     <label key={optIndex} className="block text-gray-700 mb-1 option-label">
@@ -178,7 +198,7 @@ const QuizGenerator = () => {
                         className="mr-2"
                         disabled={showResults}
                       />
-                      {option}
+                      <InlineMath text={option} />
                     </label>
                   ))}
                 </div>

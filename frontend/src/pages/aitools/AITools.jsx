@@ -12,7 +12,26 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import KaTeXRenderer from '../../components/utils/KaTeXRenderer';
+import katex from 'katex';
 import './AITools.css';
+
+/* ── Inline Math renderer ──────────────────────────────────── */
+const InlineMath = ({ text }) => {
+  if (!text) return null;
+  const parts = text.split('$');
+  return (
+    <span>
+      {parts.map((part, index) => {
+        if (index % 2 === 0) return <span key={index}>{part}</span>;
+        try {
+          return <span key={index} dangerouslySetInnerHTML={{ __html: katex.renderToString(part, { throwOnError: false, displayMode: false }) }} />;
+        } catch (e) {
+          return <span key={index}>${part}$</span>;
+        }
+      })}
+    </span>
+  );
+};
 
 /* ── Markdown renderer ─────────────────────────────────────── */
 const MarkdownRenderer = ({ text }) => {
@@ -167,7 +186,7 @@ const QuizGenerator = () => {
         <div className="mt-8">
           {quiz.map((q, qi) => (
             <div key={qi} className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50 question-card">
-              <p className="font-bold text-lg text-gray-900 mb-3">Q{qi + 1}: {q.question}</p>
+              <p className="font-bold text-lg text-gray-900 mb-3">Q{qi + 1}: <InlineMath text={q.question} /></p>
               <div className="options-group space-y-2">
                 {q.options.map((opt, oi) => (
                   <label key={oi} className="flex items-center gap-2 text-gray-700 option-label cursor-pointer">
@@ -175,7 +194,7 @@ const QuizGenerator = () => {
                       onChange={() => handleAnswerChange(qi, opt.charAt(0))}
                       checked={studentAnswers[qi] === opt.charAt(0)}
                       disabled={showResults} />
-                    {opt}
+                    <InlineMath text={opt} />
                   </label>
                 ))}
               </div>

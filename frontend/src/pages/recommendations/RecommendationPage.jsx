@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { Toaster, toast } from 'react-hot-toast';
 import { FaSpinner, FaLightbulb } from 'react-icons/fa'; // Icons for features
+import { server } from '../../main';
 import './AITools.css'; // Import custom CSS file
 
 const RecommendationPage = () => {
@@ -18,7 +20,7 @@ const RecommendationPage = () => {
       setLoadingRecommendation(true);
       setErrorRecommendation(null);
       try {
-        const response = await axios.get(`http://localhost:5000/api/get-recommendations/${userId}`);
+        const response = await axios.get(`${server}/api/get-recommendations/${userId}`);
         if (response.data.success) {
           setRecommendation(response.data.recommendation);
         } else {
