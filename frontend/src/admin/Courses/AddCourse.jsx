@@ -91,122 +91,129 @@ const AddCourse = ({ user }) => {
 
   return (
     <Layout>
-      <div className="bg-gray-100 min-h-screen py-16">
-        <div className="container mx-auto px-4 max-w-xl">
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-              Add a New Course
-            </h2>
-            <form onSubmit={submitHandler} className="space-y-4">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <input
-                  type="text"
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                  Price
-                </label>
-                <input
-                  type="number"
-                  id="price"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="createdBy" className="block text-sm font-medium text-gray-700 mb-1">
-                  Created By
-                </label>
-                <input
-                  type="text"
-                  id="createdBy"
-                  value={createdBy}
-                  onChange={(e) => setCreatedBy(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
-                <select
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value={""}>Select Category</option>
-                  {categories.map((e) => (
-                    <option value={e} key={e}>
-                      {e}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-1">
-                  Duration
-                </label>
-                <input
-                  type="number"
-                  id="duration"
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
-                  Course Image
-                </label>
-                <input type="file" id="image" required onChange={changeImageHandler} className="w-full border border-gray-300 rounded-md p-2"/>
-              </div>
-              {imagePrev && <img src={imagePrev} alt="Course Preview" className="mt-4 rounded-lg w-full object-cover" />}
-
-              <button
-                type="submit"
-                disabled={btnLoading}
-                className="w-full bg-purple-600 text-white py-2 rounded-lg font-semibold transition-colors duration-300 hover:bg-purple-700 mt-4 flex items-center justify-center"
+      <h2 className="adm-page-title">Add New Course</h2>
+      
+      <div className="adm-form-card">
+        <form onSubmit={submitHandler} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="title" className="adm-label">Course Title</label>
+              <input
+                type="text"
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="adm-input"
+                placeholder="Enter course title"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="category" className="adm-label">Category</label>
+              <select
+                id="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+                className="adm-input"
               >
-                {btnLoading ? <><FaSpinner className="animate-spin mr-2"/>Please Wait...</> : "Add Course"}
-              </button>
-            </form>
+                <option value={""}>Select Category</option>
+                {categories.map((e) => (
+                  <option value={e} key={e}>
+                    {e}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
+
+          <div>
+            <label htmlFor="description" className="adm-label">Course Description</label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+              className="adm-input"
+              style={{ minHeight: '120px' }}
+              placeholder="Provide a detailed description of the course..."
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label htmlFor="price" className="adm-label">Price (₹)</label>
+              <input
+                type="number"
+                id="price"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
+                className="adm-input"
+                placeholder="0"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="duration" className="adm-label">Duration (Weeks)</label>
+              <input
+                type="number"
+                id="duration"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                required
+                className="adm-input"
+                placeholder="e.g. 12"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="createdBy" className="adm-label">Instructor Name</label>
+              <input
+                type="text"
+                id="createdBy"
+                value={createdBy}
+                onChange={(e) => setCreatedBy(e.target.value)}
+                required
+                className="adm-input"
+                placeholder="Instructor name"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label htmlFor="image" className="adm-label">Course Thumbnail</label>
+            <div className="flex items-center gap-4">
+              <input 
+                type="file" 
+                id="image" 
+                required 
+                onChange={changeImageHandler} 
+                className="adm-input"
+                style={{ padding: '10px' }}
+              />
+            </div>
+          </div>
+
+          {imagePrev && (
+            <div className="mt-4">
+              <p className="adm-label">Thumbnail Preview</p>
+              <img src={imagePrev} alt="Course Preview" className="rounded-xl w-full h-48 object-cover border border-white/10" />
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={btnLoading}
+            className="adm-btn-primary"
+          >
+            {btnLoading ? <><FaSpinner className="animate-spin"/> Processing...</> : "Publish Course"}
+          </button>
+        </form>
       </div>
     </Layout>
+
   );
 };
 
