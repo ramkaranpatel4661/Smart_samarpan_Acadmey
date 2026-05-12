@@ -2,6 +2,8 @@
   <h1>🎓 Samarpan Math Academy</h1>
   <p>An intelligent, full-stack educational platform empowering students to master mathematics through AI-driven insights, interactive quizzes, and seamless course management.</p>
 
+  <p><strong>🌐 Live Demo:</strong> <a href="https://smart-samarpan-acadmey-git-main-ramkaran-patels-projects.vercel.app/">Smart Samarpan Academy</a></p>
+
   <!-- Add Badges -->
   <p>
     <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
