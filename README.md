@@ -2,7 +2,9 @@
   <h1>🎓 Samarpan Math Academy</h1>
   <p>An intelligent, full-stack educational platform empowering students to master mathematics through AI-driven insights, interactive quizzes, and seamless course management.</p>
 
-  <p><strong>🌐 Live Demo:</strong> <a href="https://smart-samarpan-acadmey-git-main-ramkaran-patels-projects.vercel.app/">Smart Samarpan Academy</a></p>
+  <a href="https://smart-samarpan-acadmey-git-main-ramkaran-patels-projects.vercel.app/" target="_blank">
+    <img src="https://readme-typing-svg.herokuapp.com?font=Righteous&weight=800&size=24&pause=1000&color=00FF99&background=00000000&center=true&vCenter=true&width=500&height=50&lines=🚀+Click+Here+For+Live+Demo;🌐+Smart+Samarpan+Academy;✨+Experience+the+Platform+✨" alt="Live Demo" />
+  </a>
 
   <!-- Add Badges -->
   <p>
